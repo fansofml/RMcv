@@ -14,7 +14,8 @@
 #include <opencv2/opencv.hpp>
 
 #define UART_DEVICE "/dev/ttyTHS1"
-#define ANGLE_BUFF_NUM  20 //缓存角度的个数，读取的是之前的多少个的角度
+#define ANGLE_BUFF_NUM  50 //缓存角度的个数，读取的是之前的多少个的角度
+#define ANGLE_BUFF_BASE 15 //缓存角度的基础个数，在这个数量上加上处理时间
 
 using namespace std;
 using namespace cv;
@@ -32,8 +33,8 @@ struct serial_data
     float recive_angle[2];//接受到的角度信息 ID为0x03
     float solve_angle[2];//解算出的角度，为相对值
     float send_angle[2];//要发送的角度信息 yaw,pitch
+    int time_num;//图像处理的时间，单位为5ms
 };
-
 //互斥锁
 extern bool serial_over;
 extern serial_data serial;
@@ -51,7 +52,7 @@ int init_uart();
  *@return int 设备文件号，失败返回-1
  */
 
-void updata_angle(float yaw, float pitch);
+void updata_angle(float yaw, float pitch, int time_num);
 /*@brief 将计算出的角度更新到结构体中
  * @yaw yaw轴的角度
  * @pitch pitch轴的角度

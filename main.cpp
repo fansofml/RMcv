@@ -25,8 +25,9 @@ int main()
     }
 
     float yaw, pitch;
+    int time_num;//储存图像处理的时间，单位为5ms
     Point2f center_point;
-    AST::Mode = 0;  /*Mode =0;在红方时打开自瞄       Mode =1;在蓝方时打开自瞄*/
+    AST::Mode = 1;  /*Mode =0;在红方时打开自瞄       Mode =1;在蓝方时打开自瞄*/
     AST::armormode = 1; /*mode =1;小装甲板：步兵，工程         mode=11;大装甲板：英雄，哨兵 */
 
     RMVideoCapture cap("/dev/video0",3);
@@ -47,14 +48,19 @@ int main()
         cap >> frame;
 
         points =armor.Armorfinds(frame, img_hsv, img_gray,label);
-        //double FPS;
+        double deal_time = (getTickCount()-start)/getTickFrequency();
+        time_num = (int) (deal_time/0.005);
+        time_num += ANGLE_BUFF_BASE;
+        double duration =1/deal_time;
+        cout<<time_num<<endl;
+        cout<<"FPS: "<<duration<<endl;
+
         if (!points.empty())
         {
             center_point = angle_solve(points, yaw, pitch,AST::armormode);
-            updata_angle(yaw, pitch);
+            updata_angle(yaw, pitch, time_num);
         }
-        double duration =1/((getTickCount()-start)/getTickFrequency());
-        cout<<duration<<endl;
+
 
         if((char)waitKey(5)=='q')
        {

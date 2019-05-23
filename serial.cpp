@@ -29,6 +29,7 @@ void * thread_serial(void *arg)
    temp_serial.recive_angle[1] = 0;
    temp_serial.send_angle[0] = 0;
    temp_serial.send_angle[1] = 0;
+   temp_serial.time_num = 20;
 
    RNG rng;
    const int stateNum=4;
@@ -41,10 +42,8 @@ void * thread_serial(void *arg)
    setIdentity(KF.errorCovPost, Scalar::all(1));
    rng.fill(KF.statePost, RNG::UNIFORM,-10,10);
    Mat measurement = Mat::zeros(measureNum, 1, CV_32F);
-   Mat statePre;//预测矩阵
 
    float yaw1, pitch1;//要发送的角度（未滤波）
-   float yaw0, pitch0;//储存最新的角度
 
    int fd = init_uart();//初始化串口
 
@@ -80,25 +79,34 @@ void * thread_serial(void *arg)
            KF.predict();
            temp_serial.solve_angle[0] = serial.solve_angle[0];
            temp_serial.solve_angle[1] = serial.solve_angle[1];
+           temp_serial.time_num = serial.time_num;
            pthread_mutex_unlock(&mutex);
 
-           yaw1 = temp_serial.recive_angle[0]+temp_serial.solve_angle[0];
-           pitch1 = temp_serial.recive_angle[1]+temp_serial.solve_angle[1];
+           if(temp_serial.time_num + 1 > ANGLE_BUFF_NUM)
+           {
+               temp_serial.time_num = ANGLE_BUFF_NUM;
+           }
+
+           yaw1 = temp_serial.recive_angle[0]+recive_angle_buff[temp_serial.time_num*2];
+           pitch1 = temp_serial.recive_angle[1]+recive_angle_buff[temp_serial.time_num*2+1];
+           cout<<temp_serial.time_num*2+1<<endl;
+
            measurement.at<float>(0) = yaw1;
            measurement.at<float>(1) = pitch1;
            KF.correct(measurement);
 
            //发送状态值
-           //temp_serial.send_angle[0] = KF.statePost.at<float>(0);
-           //temp_serial.send_angle[1] = KF.statePost.at<float>(1);
-           //send_angle(fd, temp_serial.send_angle);
+           temp_serial.send_angle[0] = KF.statePost.at<float>(0);
+           temp_serial.send_angle[1] = KF.statePost.at<float>(1);
+           send_angle(fd, temp_serial.send_angle);
 
+           /*
            //发送预测值
-
            int code = 7;
            temp_serial.send_angle[0] = KF.statePost.at<float>(0)+code*KF.statePost.at<float>(2);
            temp_serial.send_angle[1] = KF.statePost.at<float>(1)+code*KF.statePost.at<float>(3);
            send_angle(fd, temp_serial.send_angle);
+           */
 
            //graph(M_graph, temp_serial.recive_angle[0], temp_serial.send_angle[0], KF.statePost.at<float>(0), num);
            //imshow("graph", M_graph);
@@ -205,18 +213,15 @@ void * thread_serial(void *arg)
                                    angle_transform.ch[1] = temp_angle[3];
                                    angle_transform.ch[2] = temp_angle[4];
                                    angle_transform.ch[3] = temp_angle[5];
-                                   yaw0 = angle_transform.fl;
+                                   temp_serial.recive_angle[0] = angle_transform.fl;
                                    recive_angle_buff.insert(recive_angle_buff.begin()+0, angle_transform.fl);
                                    angle_transform.ch[0] = temp_angle[6];
                                    angle_transform.ch[1] = temp_angle[7];
                                    angle_transform.ch[2] = temp_angle[8];
                                    angle_transform.ch[3] = temp_angle[9];
-                                   pitch0 = angle_transform.fl;
+                                   temp_serial.recive_angle[1] = angle_transform.fl;
                                    recive_angle_buff.insert(recive_angle_buff.begin()+1, angle_transform.fl);
                                    recive_angle_buff.resize(recive_angle_buff_num);
-                                   temp_serial.recive_angle[0] = recive_angle_buff[recive_angle_buff_num-2];
-                                   temp_serial.recive_angle[1] = recive_angle_buff[recive_angle_buff_num-1];
-                                    cout<<"recive data"<<endl;
                                }
                            }
                            else
@@ -312,13 +317,14 @@ int init_uart()
    return fd;
 }
 
-void updata_angle(float yaw, float pitch)
+void updata_angle(float yaw, float pitch, int time_num)
 {
-   pthread_mutex_lock(&mutex);
-   serial.solve_angle[0] = yaw;
-   serial.solve_angle[1] = pitch;
-   pthread_mutex_unlock(&mutex);
-}
+    pthread_mutex_lock(&mutex);
+    serial.solve_angle[0] = yaw;
+    serial.solve_angle[1] = pitch;
+    serial.time_num = time_num;
+    pthread_mutex_unlock(&mutex);
+ }
 
 void get_angle(float &yaw, float &pitch)
 {

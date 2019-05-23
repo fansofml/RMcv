@@ -3,7 +3,7 @@
 #define SMALL_ARMOR_WIDTH 140;//小装甲板的宽度
 #define BIG_ARMOR_WIDTH 235;//大装甲板的宽度
 #define CAMERA_HEIGHT 40;//相机的光轴距离炮管的高度
-#define FIX_X 6;
+#define FIX_X 0;
 
 #include<opencv2/opencv.hpp>
 #include<iostream>

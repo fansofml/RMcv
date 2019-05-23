@@ -23,8 +23,8 @@ vector<Point2f> Armorfind::Armorfinds(Mat src, Mat img_hsv, Mat img_gray,bool &l
 
     namedWindow("picutre_text1");
     namedWindow("picutre_text2");
-    namedWindow("picutre_text3");
-    namedWindow("picutre_text4");
+    //namedWindow("picutre_text3");
+    //namedWindow("picutre_text4");
         Mat text(480, 640,CV_8UC1,Scalar(0));
         Mat text1(480, 640, CV_8UC1, Scalar(0));
         Mat text2(480, 640, CV_8UC1, Scalar(0));
@@ -59,8 +59,8 @@ vector<Point2f> Armorfind::Armorfinds(Mat src, Mat img_hsv, Mat img_gray,bool &l
   // resize(src, src, Size(1280, 720));
   imshow("picutre_text1",src);
   imshow("picutre_text2", img_gray);
-  imshow("picutre_text3", text1);
-  imshow("picutre_text4", text2);
+  //imshow("picutre_text3", text1);
+  //imshow("picutre_text4", text2);
     armorclear();
     return armor_points;
 
@@ -363,7 +363,7 @@ bool Armorfind::colorchoose(Mat src, Point it)
         }
         else if (AST::Mode == 1)
         {
-            if( (R-B>40) &&(G<200))
+            if( (R-B>40) )
             {
                 return 1;
             }
@@ -576,11 +576,12 @@ vector<Point2f> Armorfind::high_chooses(vector<vector<Point2f>> ptss,bool  &armo
               //  cout << rect_index << endl;//1.25
               //  cout << parallel_index << endl;//0.99
          //       cout << lwr_index << endl;//20
+
             if(AST::armormode ==1)
                 {
                          if (Grade > best_grade)
                     {
-                      if((parallel_index>1&&parallel_index<3.55))
+                      if((parallel_index>1&&parallel_index<2.55))
                          {
                             if(angle_index<10)
                             {
@@ -606,9 +607,9 @@ vector<Point2f> Armorfind::high_chooses(vector<vector<Point2f>> ptss,bool  &armo
                            }
                      }
                   }
-            }
-        }
 
+        }
+}
 
         if(best_grade !=0)
      last_armor = ptss[j];
